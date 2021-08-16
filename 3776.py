@@ -1,6 +1,7 @@
-# -*- coding: utf-8 -*-
 import requests
 from bs4 import BeautifulSoup
+import json
+import os
 
 cookies = {
     '__ddg1': 'hgJdZO3GDZdVXwJW2opu',
@@ -19,13 +20,26 @@ headers = {
     'Accept-Language': 'en-US,en;q=0.9,ru;q=0.8',
 }
 
-data = '{"subjectId":"5","levelIds":[],"themeIds":[],"typeIds":[],"id":"","favorites":0,"answerStatus":0,"themeSectionIds":[],"published":0,"extId":"","fipiCode":"","docId":"","isAdmin":false,"loadDates":[],"isPublished":false,"pageSize":5,"pageNumber":1}'
+data = '{"subjectId":"12","levelIds":[],"themeIds":[],"typeIds":[],"id":"","favorites":0, "answerStatus":0,"themeSectionIds":[],"published":0,"extId":"","fipiCode":"","docId":"","isAdmin":true,"loadDates":[],"isPublished":false,"pageSize":5,"pageNumber":1}'
 
 response = requests.post('http://os.fipi.ru/api/tasks', headers=headers, cookies=cookies, data=data, verify=False)
 jss = response.json()
-rofl = jss['tasks'][0]['html'].strip()
-checkBoxNumber = jss['tasks'][1]['answer']
-print(checkBoxNumber)
-parsed_html = BeautifulSoup(rofl,'lxml')
-ann = parsed_html.findAll("div",{"class":"answer","id":f"answer_{checkBoxNumber}"})
-print(ann[1])
+#rofl = jss['tasks'][0]['html'].strip()
+tasks = jss['tasks']
+print(os.listdir())
+
+for task in tasks:
+    parsed_html = BeautifulSoup(task['html'],'lxml')
+    answers = list(map(lambda x: x.text, parsed_html.findAll("p",{"class":"MsoNormal"})))
+    data = {
+        "id": task["id"],
+        "answer_index": 0,
+        "answers": [answers],
+        "text": task['taskText'].content,
+
+    }
+    themeNameId = task['themeNames'][0].split()[0]
+    if f"{themeNameId}.json" not in os.listdir():
+        with open(f'{data["id"]}.json', 'w') as f:
+            json.dump(task, f, ensure_ascii=False, sort_keys=True, indent=2)
+
