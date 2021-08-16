@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import os
+import re
 
 cookies = {
     '__ddg1': 'hgJdZO3GDZdVXwJW2opu',
@@ -20,7 +21,7 @@ headers = {
     'Accept-Language': 'en-US,en;q=0.9,ru;q=0.8',
 }
 
-data = '{"subjectId":"12","levelIds":[],"themeIds":[],"typeIds":[],"id":"","favorites":0, "answerStatus":0,"themeSectionIds":[],"published":0,"extId":"","fipiCode":"","docId":"","isAdmin":true,"loadDates":[],"isPublished":false,"pageSize":10,"pageNumber":1}'
+data = '{"subjectId":"12","levelIds":[],"themeIds":[],"typeIds":[],"id":"","favorites":0, "answerStatus":0,"themeSectionIds":[],"published":0,"extId":"","fipiCode":"","docId":"","isAdmin":true,"loadDates":[],"isPublished":false,"pageSize":100,"pageNumber":1}'
 
 response = requests.post('http://os.fipi.ru/api/tasks', headers=headers, cookies=cookies, data=data, verify=False)
 jss = response.json()
@@ -30,13 +31,15 @@ print(os.listdir())
 for task in tasks:
     if task['taskTypeId'] == 2:
         parsed_html = BeautifulSoup(task['html'],'lxml')
-        answers = list(map(lambda x: x.text, parsed_html.findAll("p",{"class":"answer"})[1::]))
+        answers = list(map(lambda x: x.text, parsed_html.findAll("div",{"class":"answer"})))
+        text = " ".join(list(map(lambda x: x.text, BeautifulSoup(task['taskTextWord'],'lxml').findAll("p"))))
+        text = re.sub('\\r*\\n*\\\\*', '', text)
         data = {
             "id": task["id"],
+            "taskTypeId": task["taskTypeId"],
             "answer_index": int(task['answer'])-1,
             "answers": answers,
-            "text": task['taskTextWord'],
-
+            "text": text,
         }
         themeNameId = task['themeNames'][0].split()[0]
         if f"{themeNameId}.json" not in os.listdir():
