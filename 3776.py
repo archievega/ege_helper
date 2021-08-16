@@ -21,7 +21,23 @@ headers = {
     'Accept-Language': 'en-US,en;q=0.9,ru;q=0.8',
 }
 
-data = '{"subjectId":"12","levelIds":[],"themeIds":[],"typeIds":[],"id":"","favorites":0, "answerStatus":0,"themeSectionIds":[],"published":0,"extId":"","fipiCode":"","docId":"","isAdmin":true,"loadDates":[],"isPublished":false,"pageSize":100,"pageNumber":1}'
+data = '{"subjectId":"12",'\
+       '"levelIds":[],'\
+       '"themeIds":[],'\
+       '"typeIds":[],'\
+       '"id":"",'\
+       '"favorites":0,'\
+       '"answerStatus":0,'\
+       '"themeSectionIds":[],'\
+       '"published":0,'\
+       '"extId":"",'\
+       '"fipiCode":"",'\
+       '"docId":"",'\
+       '"isAdmin":true,'\
+       '"loadDates":[],'\
+       '"isPublished":false,'\
+       '"pageSize":100,'\
+       '"pageNumber":1}'
 
 response = requests.post('http://os.fipi.ru/api/tasks', headers=headers, cookies=cookies, data=data, verify=False)
 jss = response.json()
