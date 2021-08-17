@@ -20,50 +20,64 @@ headers = {
     'Referer': 'http://os.fipi.ru/tasks/5/a',
     'Accept-Language': 'en-US,en;q=0.9,ru;q=0.8',
 }
+#subjects_id = [1,2,3,4,5,6,7,8,9,10,11,12,13,18,22]
+subjects_id = [7]
+with open('subjects.json') as f:
+    subjects = json.load(f)
+for i in subjects_id:
+    data =f'''"subjectId":{i},
+        "levelIds":[],
+        "themeIds":[],
+        "typeIds":[],
+        "id":"",
+        "favorites":0,
+        "answerStatus":0,
+        "themeSectionIds":[],
+        "published":0,
+        "extId":"",
+        "fipiCode":"",
+        "docId":"",
+        "isAdmin":true,
+        "loadDates":[],
+        "isPublished":false,
+        "pageSize":5,
+        "pageNumber":1'''
 
-data = '{"subjectId":"12",'\
-       '"levelIds":[],'\
-       '"themeIds":[],'\
-       '"typeIds":[],'\
-       '"id":"",'\
-       '"favorites":0,'\
-       '"answerStatus":0,'\
-       '"themeSectionIds":[],'\
-       '"published":0,'\
-       '"extId":"",'\
-       '"fipiCode":"",'\
-       '"docId":"",'\
-       '"isAdmin":true,'\
-       '"loadDates":[],'\
-       '"isPublished":false,'\
-       '"pageSize":100,'\
-       '"pageNumber":1}'
-
-response = requests.post('http://os.fipi.ru/api/tasks', headers=headers, cookies=cookies, data=data, verify=False)
-jss = response.json()
-tasks = jss['tasks']
-print(os.listdir())
-
-for task in tasks:
-    if task['taskTypeId'] == 2:
-        parsed_html = BeautifulSoup(task['html'],'lxml')
-        answers = list(map(lambda x: x.text, parsed_html.findAll("div",{"class":"answer"})))
-        text = " ".join(list(map(lambda x: x.text, BeautifulSoup(task['taskTextWord'],'lxml').findAll("p"))))
-        text = re.sub('\\r*\\n*\\\\*', '', text)
-        data = {
-            "id": task["id"],
-            "taskTypeId": task["taskTypeId"],
-            "answer_index": int(task['answer'])-1,
-            "answers": answers,
-            "text": text,
-        }
-        themeNameId = task['themeNames'][0].split()[0]
-        if f"{themeNameId}.json" not in os.listdir():
-            with open(f'{themeNameId}.json', 'w') as f:
-                json.dump([data], f, ensure_ascii=False, indent=2)
-        else:
-            with open(f'{themeNameId}.json') as f:
-                old_data = json.load(f)
-            old_data += [data]
-            with open(f'{themeNameId}.json', 'w') as f:
-                json.dump(old_data, f, ensure_ascii=False, indent=2)
+    response = requests.post('http://os.fipi.ru/api/tasks', headers=headers, cookies=cookies, data="{"+data+"}", verify=False)
+    jss = response.json()
+    tasks = jss['tasks']
+    if subjects[str(i)] not in os.listdir():
+        os.mkdir(f"{subjects[str(i)]}")
+    os.chdir(f"{subjects[str(i)]}")
+    for task in tasks:
+        if task['taskTypeId'] == 1:
+            text = " ".join(list(map(lambda x: x.text, BeautifulSoup(task['taskTextWord'],'lxml').findAll("p"))))
+            text = re.sub('\\r\\n\\\\*', ' ', text)
+            data = {
+                "id": task["id"],
+                "taskTypeId": task["taskTypeId"],
+                "answer": task["answer"],
+                "text": text,
+            }
+        elif task['taskTypeId'] == 2:
+            parsed_html = BeautifulSoup(task['html'],'lxml')
+            answers = list(map(lambda x: x.text.strip(), parsed_html.findAll("div",{"class":"answer"})))
+            text = " ".join(list(map(lambda x: x.text, BeautifulSoup(task['taskTextWord'],'lxml').findAll("p"))))
+            text = re.sub('\\r\\n\\\\*', ' ', text)
+            data = {
+                "id": task["id"],
+                "taskTypeId": task["taskTypeId"],
+                "answer_index": int(task['answer'])-1,
+                "answers": answers,
+                "text": text,
+            }
+            themeNameId = task['themeNames'][0].split()[0]
+            if f"{themeNameId}.json" not in os.listdir():
+                with open(f'{themeNameId}.json', 'w') as f:
+                    json.dump([data], f, ensure_ascii=False, indent=2)
+            else:
+                with open(f'{themeNameId}.json') as f:
+                    old_data = json.load(f)
+                old_data += [data]
+                with open(f'{themeNameId}.json', 'w') as f:
+                    json.dump(old_data, f, ensure_ascii=False, indent=2)
